@@ -1,0 +1,23 @@
+# Object files
+*.o
+
+# Debugging files
+*.dSYM/
+
+# Libraries
+*.a
+*.so
+*.so.*
+*.dylib
+
+# Executables and test output
+int2*
+fort.13
+print_testres.txt
+
+# MATLAB files
+*.mex*
+*.asv
+
+# editor files
+*~
