@@ -19,5 +19,8 @@ print_testres.txt
 *.mex*
 *.asv
 
-# editor files
+# Editor files
 *~
+
+# macOS files
+.DS_Store
