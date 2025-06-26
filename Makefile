@@ -42,7 +42,7 @@ MOMPFLAGS = -D_OPENMP
 MEX=mex
 
 # For experts, location of Mwrap executable
-MWRAP=../../mwrap/mwrap
+MWRAP=mwrap
 MEXLIBS=-lm -lstdc++ -ldl -lgfortran
 
 FMM_INSTALL_DIR=$(PREFIX)
@@ -100,7 +100,7 @@ TOBJS = $(GEN)/dcuhre.o $(TEST)/laprouts2d.o
 
 TABLES = $(patsubst %.f,%.o,$(wildcard $(TAB)/pbox2dtab*.f)) 
 
-.PHONY: usage install lib test all clean
+.PHONY: usage install lib test matlab mwrap all clean
 
 default: usage
 
@@ -110,8 +110,12 @@ usage:
 	@echo "  make install PREFIX=(INSTALL_DIR) - compile and install the main library at custom location given by PREFIX"
 	@echo "  make lib - compile the main library (in lib/ and lib-static/)"
 	@echo "  make test - compile and run validation tests (will take a couple of mins)"
+	@echo "  make matlab - compile the MATLAB MEX interface"
+	@echo "  make mwrap - regenerate the MEX interface files using MWrap"
 	@echo "  make objclean - remove most object files, preserving tables and libs"
 	@echo "  make deepobjclean - remove all object files, preserving libs"
+	@echo "  make mexclean - remove the MEX interface"
+	@echo "  make mwrapclean - remove the MEX interface and MWrap files (requires MWrap to rebuild)"
 	@echo "  make clean - also remove libs and executables"
 	@echo "For faster (multicore) making, append the flag -j"
 	@echo "  'make [task] OMP=OFF' for single-threaded"
@@ -164,10 +168,17 @@ $(DYNAMICLIB): $(OBJS) $(TABLES)
 	mv $(DYNAMICLIB) lib/
 	[ ! -f $(LIMPLIB) ] || mv $(LIMPLIB) lib/
 
+mwrap: matlab/boxcode2d.c
+
+matlab/boxcode2d.c: matlab/boxcode2d.mw
+	$(MWRAP) $(MWFLAGS) -mex boxcode2d_mex -c matlab/boxcode2d.c -m matlab/boxcode2d.m matlab/boxcode2d.mw
+
+matlab: matlab/boxcode2d_mex.mex*
+
+matlab/boxcode2d_mex.mex*: matlab/boxcode2d.c ./lib-static/$(STATICLIB)
+	$(MEX) matlab/boxcode2d.c ./lib-static/$(STATICLIB) $(MFLAGS) $(MEXLIBS) -output matlab/boxcode2d_mex
 
 # testing routines
-#
-
 
 test/l2dpwrouts:
 	$(FC) $(FFLAGS) test/test_l2dpwrouts.f $(TOBJS) $(OBJS) $(TABLES) -o test/int2-test_l2dpwrouts $(LIBS)
@@ -177,7 +188,6 @@ test/lrt2d:
 
 test/pbox2drouts:
 	$(FC) $(FFLAGS) test/test_pbox2drouts.f $(TOBJS) $(OBJS) $(TABLES) -o test/int2-test_pbox2drouts $(LIBS)
-
 
 test: $(STATICLIB) $(TOBJS) test/l2dpwrouts test/lrt2d test/pbox2drouts
 	rm -f print_testres.txt
@@ -191,6 +201,12 @@ objclean:
 deepobjclean:
 	rm -f $(OBJS) $(TOBJS) $(TABLES)
 
+mexclean:
+	rm -f matlab/*.mex*
+
+mwrapclean: mexclean
+	rm -f matlab/boxcode2d.m matlab/boxcode2d.c
+
 clean:
 	rm -f $(OBJS) $(TOBJS)
 	rm -f $(TABLES)
@@ -198,5 +214,4 @@ clean:
 	rm -f lib-static/$(STATICLIB)
 	rm -f test/int2*
 	rm -f gen/int2*
-
-
+	rm -f matlab/*.mex*

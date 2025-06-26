@@ -1,0 +1,27 @@
+@function [U, ier, timeinfo] = boxcode2d(eps, itree, blength, nd, npts, n, pttype, polytype, fvals, ifpot, ifgrad, ifhess)
+
+ier = 0;
+timeinfo = zeros(6, 1);
+litree = length(itree);
+nboxes = itree(1);
+pot  = zeros(1, npts);
+grad = zeros(2, npts);
+hess = zeros(3, npts);
+if ( ifpot  ), pot  = zeros(npts, nboxes);    end
+if ( ifgrad ), grad = zeros(2, npts, nboxes); end
+if ( ifhess ), hess = zeros(3, npts, nboxes); end
+
+% MWrap needs everything to be a double
+pttype   = double(pttype);
+polytype = double(polytype);
+ifpot    = double(ifpot);
+ifgrad   = double(ifgrad);
+ifhess   = double(ifhess);
+
+# FORTRAN poissbox2d(double eps, int litree, int[litree] itree, double blength, int nd, int nboxes, int npts, int n, char pttype, char polytype, double[] fvals, int ifpot, inout double[] pot, int ifgrad, inout double[] grad, int ifhess, inout double[] hess, inout int[1] ier, inout double[6] timeinfo);
+
+if ( ifpot  ), U.pot  = pot;  end
+if ( ifgrad ), U.grad = grad; end
+if ( ifhess ), U.hess = hess; end
+
+end
